@@ -8,6 +8,13 @@
 > go mod init github.com/truecoder34/l0-wb-nats-service
 > go get github.com/nats-io/nats-streaming-server
 > go get github.com/nats-io/go-nats-streaming
+> go get gorm.io/gorm
+> go get github.com/satori/go.uuid
+> go get github.com/joho/godotenv
+> go get "gorm.io/driver/postgres"
+> go get "github.com/gorilla/mux"
+> go get "github.com/gin-gonic/gin" 
+
 ```
 
 
