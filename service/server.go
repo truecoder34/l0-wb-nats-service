@@ -7,7 +7,6 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/truecoder34/l0-wb-nats-service/service/controllers"
-	//"github.com/truecoder34/l0-wb-nats-service/service/seed"
 )
 
 var server = controllers.Server{}

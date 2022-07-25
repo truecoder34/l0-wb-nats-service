@@ -1,24 +1,56 @@
 package models
 
 import (
+	"errors"
+
 	uuid "github.com/satori/go.uuid"
+	"gorm.io/gorm"
 )
 
 type Transaction struct {
 	Entity
-	OrderUID    uuid.UUID `gorm:"type:uuid;primary_key;" json:"order_uid"`
-	TrackNumber string    `gorm:"size:255;not null;" json:"track_number"`
-	Entry       string    `gorm:"size:255;not null;" json:"entry"`
-	Items       []Item
-	//delivery
-	//payment
-	//items
+
+	OrderUID          string `gorm:"size:255;not null;unique" json:"order_uid"`
+	TrackNumber       string `gorm:"size:255;not null;unique" json:"track_number"`
+	Entry             string `gorm:"size:255;not null;" json:"entry"`
 	Locale            string `gorm:"size:255;not null;" json:"locale"`
 	InternalSignature string `gorm:"size:255;" json:"internal_signature"`
 	CustomerID        string `gorm:"size:255;" json:"customer_id"`
 	DeliveryService   string `gorm:"size:255;" json:"delivery_service"`
 	Shardkey          string `gorm:"size:255;" json:"shardkey"`
-	SmID              string `gorm:"size:255;" json:"sm_id"`
+	SmID              int64  `gorm:"not null;" json:"sm_id"`
 	DateCreated       string `gorm:"size:255;" json:"date_created"`
 	OofShard          string `gorm:"size:255;" json:"oof_shard"`
+
+	Items    []Item   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Delivery Delivery `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Payment  Payment  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"` //;references:transaction"`
+}
+
+/*
+	Find all Transactions entity
+*/
+func (trn *Transaction) FindAllTransactions(db *gorm.DB) (*[]Transaction, error) {
+	var err error
+	transactions := []Transaction{}
+
+	//err = db.Debug().Model(&Transaction{}).Limit(100).Preload("Delivery").Preload("Payment").Preload("Items").Find(&transactions).Error // WORKS. BUT FAILS WITH 3 JOINS
+	err = db.Debug().Model(&Transaction{}).Limit(100).Joins("Delivery").Joins("Payment").Preload("Items").Find(&transactions).Error
+	if err != nil {
+		return &[]Transaction{}, err
+	}
+	return &transactions, err
+}
+
+func (trn *Transaction) FindTransactionByID(db *gorm.DB, tid uuid.UUID) (*Transaction, error) {
+	var err error
+	err = db.Debug().Model(Transaction{}).Joins("Delivery").Joins("Payment").Preload("Items").Find(&trn, "transactions.id = ?", tid).Error
+
+	if gorm.ErrRecordNotFound == err {
+		return &Transaction{}, errors.New("account entity not found in database")
+	} else if err != nil {
+		return &Transaction{}, err
+	}
+
+	return trn, err
 }
