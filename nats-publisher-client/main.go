@@ -2,7 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -62,7 +65,7 @@ func main() {
 
 	log.SetFlags(0)
 	flag.Parse()
-	args := flag.Args()
+	//args := flag.Args()
 
 	// Connect Options.
 	opts := []nats.Option{nats.Name("NATS Streaming Example Publisher")}
@@ -84,8 +87,21 @@ func main() {
 	}
 	defer sc.Close()
 
-	subj, msg := args[0], []byte(args[1])
-	//subj, msg := "foo", []byte("HELLO WORLD")
+	// READ JSON
+	// Open our jsonFile
+	jsonFile, err := os.Open("model.json")
+	// if we os.Open returns an error then handle it
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Successfully Opened model.json")
+	// defer the closing of our jsonFile so that we can parse it later on
+	defer jsonFile.Close()
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	//subj, msg := args[0], []byte(args[1])
+	subj, msg := "transactions", byteValue
 
 	ch := make(chan bool)
 	var glock sync.Mutex

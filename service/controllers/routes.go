@@ -6,4 +6,7 @@ func (s *Server) initializeRoutes() {
 	//base login
 	s.Router.HandleFunc("/", middlewares.SetMiddlewareJSON(s.Home)).Methods("GET")
 
+	s.Router.HandleFunc("/transactions", middlewares.SetMiddlewareJSON(s.GetTransactions)).Methods("GET")
+	s.Router.HandleFunc("/transaction/{id}", middlewares.SetMiddlewareJSON(s.GetTransaction)).Methods("GET")
+
 }
