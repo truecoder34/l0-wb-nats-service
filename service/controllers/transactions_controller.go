@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -8,6 +10,20 @@ import (
 	"github.com/truecoder34/l0-wb-nats-service/service/models"
 	"github.com/truecoder34/l0-wb-nats-service/service/responses"
 )
+
+func (server *Server) ParseTransactionsMessage(messageData []byte) (models.Transaction, error) {
+	var tr models.Transaction
+	err := json.Unmarshal(messageData, &tr)
+	if err != nil {
+		// TODO : ADD CHECK TO PREVENT UNEXPECTED DATA PROCESSING
+		log.Print(err)
+	}
+
+	transaction, err := tr.CreatedNestedTransaction(server.DB, tr)
+	log.Println(transaction)
+
+	return tr, err
+}
 
 func (server *Server) GetTransactions(w http.ResponseWriter, r *http.Request) {
 	transaction := models.Transaction{}

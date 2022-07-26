@@ -34,7 +34,8 @@ func (trn *Transaction) FindAllTransactions(db *gorm.DB) (*[]Transaction, error)
 	var err error
 	transactions := []Transaction{}
 
-	//err = db.Debug().Model(&Transaction{}).Limit(100).Preload("Delivery").Preload("Payment").Preload("Items").Find(&transactions).Error // WORKS. BUT FAILS WITH 3 JOINS
+	// WORKS. BUT FAILS WITH 3 JOINS. WHY?!
+	//err = db.Debug().Model(&Transaction{}).Limit(100).Preload("Delivery").Preload("Payment").Preload("Items").Find(&transactions).Error
 	err = db.Debug().Model(&Transaction{}).Limit(100).Joins("Delivery").Joins("Payment").Preload("Items").Find(&transactions).Error
 	if err != nil {
 		return &[]Transaction{}, err
@@ -42,6 +43,9 @@ func (trn *Transaction) FindAllTransactions(db *gorm.DB) (*[]Transaction, error)
 	return &transactions, err
 }
 
+/*
+	Find Transaction by ID
+*/
 func (trn *Transaction) FindTransactionByID(db *gorm.DB, tid uuid.UUID) (*Transaction, error) {
 	var err error
 	err = db.Debug().Model(Transaction{}).Joins("Delivery").Joins("Payment").Preload("Items").Find(&trn, "transactions.id = ?", tid).Error
@@ -51,6 +55,37 @@ func (trn *Transaction) FindTransactionByID(db *gorm.DB, tid uuid.UUID) (*Transa
 	} else if err != nil {
 		return &Transaction{}, err
 	}
-
 	return trn, err
+}
+
+/*
+	Create nested transaction received from NATS STREAMING SERVER
+*/
+func (trn *Transaction) CreatedNestedTransaction(db *gorm.DB, transactionToCreate Transaction) (*Transaction, error) {
+	var err error
+
+	//tx := db.Debug().Model(&Transaction{}).Session(&gorm.Session{})
+	tx := db.Debug().Session(&gorm.Session{})
+	err = tx.Model(&Transaction{}).Create(&trn).Error
+	if err != nil {
+		return &Transaction{}, err
+	}
+
+	trn.Delivery.TransactionID = trn.ID
+	trn.Payment.TransactionID = trn.ID
+	trn.Items[0].TransactionID = trn.ID
+
+	tx.Debug().Model(&Delivery{}).Create(&trn.Delivery)
+	tx.Debug().Model(&Payment{}).Create(&trn.Payment)
+	tx.Debug().Model(&Item{}).Create(&trn.Items[0])
+
+	// if account.ID != uuid.Nil {
+	// 	err = db.Debug().Model(&User{}).Where("id = ?", account.UserID).Take(&account.Account).Error
+	// 	if err != nil {
+	// 		return &Account{}, err
+	// 	}
+	// }
+	// return account, nil
+
+	return trn, nil
 }
