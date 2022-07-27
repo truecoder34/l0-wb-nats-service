@@ -71,21 +71,5 @@ func (trn *Transaction) CreatedNestedTransaction(db *gorm.DB, transactionToCreat
 		return &Transaction{}, err
 	}
 
-	trn.Delivery.TransactionID = trn.ID
-	trn.Payment.TransactionID = trn.ID
-	trn.Items[0].TransactionID = trn.ID
-
-	tx.Debug().Model(&Delivery{}).Create(&trn.Delivery)
-	tx.Debug().Model(&Payment{}).Create(&trn.Payment)
-	tx.Debug().Model(&Item{}).Create(&trn.Items[0])
-
-	// if account.ID != uuid.Nil {
-	// 	err = db.Debug().Model(&User{}).Where("id = ?", account.UserID).Take(&account.Account).Error
-	// 	if err != nil {
-	// 		return &Account{}, err
-	// 	}
-	// }
-	// return account, nil
-
 	return trn, nil
 }

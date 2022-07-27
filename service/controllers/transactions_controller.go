@@ -11,7 +11,7 @@ import (
 	"github.com/truecoder34/l0-wb-nats-service/service/responses"
 )
 
-func (server *Server) ParseTransactionsMessage(messageData []byte) (models.Transaction, error) {
+func (server *Server) CreateTransactionFromNATS(messageData []byte) (models.Transaction, error) {
 	var tr models.Transaction
 	err := json.Unmarshal(messageData, &tr)
 	if err != nil {

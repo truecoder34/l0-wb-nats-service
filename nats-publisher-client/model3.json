@@ -1,0 +1,49 @@
+{
+  "order_uid": "v673feb7b2b84b6test",
+  "track_number": "WBI3LMTESTTRACK",
+  "entry": "WBIL",
+  "delivery": {
+    "name": "Mest Mestov",
+    "phone": "+9720099001",
+    "zip": "1744809",
+    "city": "Mestechko",
+    "address": "Ulitsa Mira 15",
+    "region": "Trap",
+    "email": "mest@gmail.com"
+  },
+  "payment": {
+    "transaction": "v673feb7b2b84b6test",
+    "request_id": "",
+    "currency": "USD",
+    "provider": "wbpay",
+    "amount": 1600,
+    "payment_dt": 1637907727,
+    "bank": "alpha",
+    "delivery_cost": 1500,
+    "goods_total": 1,
+    "custom_fee": 0
+  },
+  "items": [
+    {
+      "chrt_id": 9934560,
+      "track_number": "WBI3LMTESTTRACK",
+      "price": 1000,
+      "rid": "ab4219087a764ae0btest3",
+      "name": "Pants",
+      "sale": 90,
+      "size": "0",
+      "total_price": 100,
+      "nm_id": 2389212,
+      "brand": "Adidas",
+      "status": 202
+    }
+  ],
+  "locale": "en",
+  "internal_signature": "",
+  "customer_id": "test",
+  "delivery_service": "meest",
+  "shardkey": "9",
+  "sm_id": 99,
+  "date_created": "2021-11-26T06:22:19Z",
+  "oof_shard": "1"
+}

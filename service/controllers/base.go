@@ -15,8 +15,10 @@ import (
 )
 
 type Server struct {
-	DB     *gorm.DB
-	Router *mux.Router
+	DB       *gorm.DB
+	Router   *mux.Router
+	natsConn *nats.Conn
+	stanConn stan.Conn
 }
 
 func (server *Server) Initialize(Dbdriver, DbUser, DbPassword, DbPort, DbHost, DbName string) {
@@ -37,6 +39,7 @@ func (server *Server) Initialize(Dbdriver, DbUser, DbPassword, DbPort, DbHost, D
 	server.Router = mux.NewRouter()
 
 	server.initializeRoutes()
+
 }
 
 const (
@@ -58,39 +61,41 @@ const (
 func (server *Server) printMsg(m *stan.Msg, i int) {
 	log.Printf("[#%d] Received: %s\n", i, m)
 	log.Printf("[#%d] Received.Data: %s\n", i, m.Data)
-
-	tr, err := server.ParseTransactionsMessage(m.Data)
-	if err != nil {
-		// TODO : ADD CHECK TO PREVENT UNEXPECTED DATA PROCESSING
-		log.Print(err)
-	}
-
-	log.Printf("[#%d] Received.Transaction: %s\n", i, tr)
 }
 
 func (server *Server) Run(addr string) {
-
 	// NATS STREAMING  CONNECTION TODO: Incapsulate it into separate function
-	var natsConn *nats.Conn
-	natsConn, err := nats.Connect(nats.DefaultURL)
+	//messageConsumer.SubscribeSimpleNats()
+	var err error
+	server.natsConn, err = nats.Connect(nats.DefaultURL)
 	if err != nil {
 		panic(err)
 	}
-	defer natsConn.Close()
-	conn, err := stan.Connect(clusterID, clientID, stan.NatsConn(natsConn))
+	defer server.natsConn.Close()
+
+	server.stanConn, err = stan.Connect(clusterID, clientID, stan.NatsConn(server.natsConn))
 	if err != nil {
 		log.Print(err)
 	}
-	//initial message handler
+
 	i := 0
 	msgHandle := func(m *stan.Msg) {
 		i++
+		// 1 - Add message data to cache
+
+		// 2 - Add data to database
+		tr, err := server.CreateTransactionFromNATS(m.Data)
+		if err != nil {
+			// TODO : ADD CHECK TO PREVENT UNEXPECTED DATA PROCESSING
+			log.Print(err)
+		}
+		log.Printf("[#%d] Received.Transaction: %s\n", i, tr)
+		// 3 - Logging or Printing Message
 		server.printMsg(m, i)
 	}
-	conn.QueueSubscribe("transactions", qgroup, msgHandle, stan.DurableName(durable))
+	server.stanConn.QueueSubscribe("transactions", qgroup, msgHandle, stan.DurableName(durable))
 	log.Printf("Connected to %s clusterID: [%s] clientID: [%s]\n", URL, clusterID, clientID)
-	defer conn.Close()
-	//messageConsumer.SubscribeSimpleNats()
+	defer server.stanConn.Close()
 
 	fmt.Println("Listening to port 8080")
 	log.Fatal(http.ListenAndServe(addr, server.Router))
