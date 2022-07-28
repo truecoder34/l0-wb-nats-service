@@ -1,0 +1,49 @@
+{
+  "order_uid": "v663feb7b2b84b6test",
+  "track_number": "WB2ILMTESTTRACK",
+  "entry": "WBIL",
+  "delivery": {
+    "name": "Press Pressov",
+    "phone": "+9720000333",
+    "zip": "469001",
+    "city": "Leninka",
+    "address": "Ploshad Lenina 2",
+    "region": "Leninskiy",
+    "email": "press@gmail.com"
+  },
+  "payment": {
+    "transaction": "v663feb7b2b84b6test",
+    "request_id": "",
+    "currency": "USD",
+    "provider": "wbpay",
+    "amount": 5859,
+    "payment_dt": 1637908822,
+    "bank": "sber",
+    "delivery_cost": 278,
+    "goods_total": 1,
+    "custom_fee": 0
+  },
+  "items": [
+    {
+      "chrt_id": 8935730,
+      "track_number": "WB2ILMTESTTRACK",
+      "price": 453,
+      "rid": "ab4219087a764ae0btest2",
+      "name": "WINDRUNNER",
+      "sale": 0,
+      "size": "0",
+      "total_price": 5859 ,
+      "nm_id": 2389777,
+      "brand": "Nike",
+      "status": 202
+    }
+  ],
+  "locale": "en",
+  "internal_signature": "",
+  "customer_id": "test2",
+  "delivery_service": "meest",
+  "shardkey": "11",
+  "sm_id": 99,
+  "date_created": "2021-11-26T06:22:19Z",
+  "oof_shard": "1"
+}

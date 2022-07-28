@@ -9,4 +9,7 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/transactions", middlewares.SetMiddlewareJSON(s.GetTransactions)).Methods("GET")
 	s.Router.HandleFunc("/transaction/{id}", middlewares.SetMiddlewareJSON(s.GetTransaction)).Methods("GET")
 
+	s.Router.HandleFunc("/transactions-cache", middlewares.SetMiddlewareJSON(s.GetTransactionsFromCache)).Methods("GET")
+	s.Router.HandleFunc("/transaction-cache/{id}", middlewares.SetMiddlewareJSON(s.GetTransactionFromCacheByID)).Methods("GET")
+
 }

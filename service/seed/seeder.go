@@ -157,10 +157,7 @@ var items = []models.Item{
 }
 
 func Load(db *gorm.DB) {
-	if db.Migrator().HasTable(&models.Transaction{}) && db.Migrator().HasTable(&models.Delivery{}) && db.Migrator().HasTable(&models.Item{}) && db.Migrator().HasTable(&models.Payment{}) {
-		db.Debug().Migrator().DropTable("transactions", "deliveries", "items", "payments")
-		db.Debug().AutoMigrate(&models.Transaction{}, &models.Delivery{}, models.Item{}, models.Payment{})
-	}
+	CleanAndCreateEmpty(db)
 
 	for i, _ := range transactions {
 		db.Debug().Model(&models.Transaction{}).Create(&transactions[i])
@@ -172,5 +169,12 @@ func Load(db *gorm.DB) {
 		db.Debug().Model(&models.Delivery{}).Create(&deliveries[i])
 		db.Debug().Model(&models.Payment{}).Create(&payments[i])
 		db.Debug().Model(&models.Item{}).Create(&items[i])
+	}
+}
+
+func CleanAndCreateEmpty(db *gorm.DB) {
+	if db.Migrator().HasTable(&models.Transaction{}) && db.Migrator().HasTable(&models.Delivery{}) && db.Migrator().HasTable(&models.Item{}) && db.Migrator().HasTable(&models.Payment{}) {
+		db.Debug().Migrator().DropTable("transactions", "deliveries", "items", "payments")
+		db.Debug().AutoMigrate(&models.Transaction{}, &models.Delivery{}, models.Item{}, models.Payment{})
 	}
 }
