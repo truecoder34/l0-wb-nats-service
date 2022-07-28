@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/stan.go"
 
+	Cache "github.com/truecoder34/l0-wb-nats-service/service/cache"
 	"github.com/truecoder34/l0-wb-nats-service/service/models"
+	"github.com/truecoder34/l0-wb-nats-service/service/seed"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -19,6 +22,7 @@ type Server struct {
 	Router   *mux.Router
 	natsConn *nats.Conn
 	stanConn stan.Conn
+	cache    Cache.Cache
 }
 
 func (server *Server) Initialize(Dbdriver, DbUser, DbPassword, DbPort, DbHost, DbName string) {
@@ -40,6 +44,14 @@ func (server *Server) Initialize(Dbdriver, DbUser, DbPassword, DbPort, DbHost, D
 
 	server.initializeRoutes()
 
+	seed.Load(server.DB)
+	//seed.CleanAndCreateEmpty(server.DB)
+
+	// init cache
+	server.cache = *Cache.New(50000*time.Minute, 50000*time.Minute)
+	// load data to cache from database
+	server.cache.Load(server.DB)
+
 }
 
 const (
@@ -58,7 +70,7 @@ const (
 	durable     string = "my-durable"
 )
 
-func (server *Server) printMsg(m *stan.Msg, i int) {
+func printMsg(m *stan.Msg, i int) {
 	log.Printf("[#%d] Received: %s\n", i, m)
 	log.Printf("[#%d] Received.Data: %s\n", i, m.Data)
 }
@@ -91,7 +103,7 @@ func (server *Server) Run(addr string) {
 		}
 		log.Printf("[#%d] Received.Transaction: %s\n", i, tr)
 		// 3 - Logging or Printing Message
-		server.printMsg(m, i)
+		printMsg(m, i)
 	}
 	server.stanConn.QueueSubscribe("transactions", qgroup, msgHandle, stan.DurableName(durable))
 	log.Printf("Connected to %s clusterID: [%s] clientID: [%s]\n", URL, clusterID, clientID)
