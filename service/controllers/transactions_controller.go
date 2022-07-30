@@ -12,24 +12,28 @@ import (
 	"github.com/truecoder34/l0-wb-nats-service/service/responses"
 )
 
-func (server *Server) CreateTransactionFromNATS(messageData []byte) (models.Transaction, error) {
+func (server *Server) ProcessTransaction(messageData []byte) (models.Transaction, error) {
 	var tr models.Transaction
 	err := json.Unmarshal(messageData, &tr)
 	if err != nil {
 		// TODO : ADD CHECK TO PREVENT UNEXPECTED DATA PROCESSING
-		log.Print(err)
+		log.Print("[ERROR] Message was declined. Unmarshal stage problem", err)
+		return tr, err
 	}
-
-	// create to DB
+	// 1 - add data to DB
 	transaction, err := tr.CreatedNestedTransaction(server.DB, tr)
-	log.Println(transaction)
+	if err != nil {
+		log.Print("[ERROR] add data to DataBase stage", err)
+	}
+	log.Print("[SUCCESS] Data added to database", transaction)
 
-	// add to cache
+	// 2 - add data to CACHE
 	server.cache.Set(transaction.ID.String(), *transaction, 50000*time.Minute)
-	//trCahce, i := server.cache.Get("testKey")
-	//log.Println("return from cache : ",trCahce, i)
-
-	return tr, err
+	_, isFound := server.cache.Get(transaction.ID.String())
+	if !isFound {
+		log.Print("[ERROR] Data was failed to add into CACHE")
+	}
+	return *transaction, nil
 }
 
 func (server *Server) GetTransactions(w http.ResponseWriter, r *http.Request) {
@@ -67,11 +71,15 @@ func (server *Server) GetTransaction(w http.ResponseWriter, r *http.Request) {
 */
 func (server *Server) GetTransactionsFromCache(w http.ResponseWriter, r *http.Request) {
 	transactions, err := server.cache.GetAll()
+	var trs []models.Transaction
+	for _, transaction := range transactions {
+		trs = append(trs, transaction.Value)
+	}
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
-	responses.JSON(w, http.StatusOK, transactions)
+	responses.JSON(w, http.StatusOK, trs)
 }
 
 /*
@@ -86,7 +94,7 @@ func (server *Server) GetTransactionFromCacheByID(w http.ResponseWriter, r *http
 	}
 
 	transactionReceived, found := server.cache.Get(tid.String())
-	if found == false {
+	if !found {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}

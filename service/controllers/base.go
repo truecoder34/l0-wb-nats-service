@@ -12,7 +12,6 @@ import (
 
 	Cache "github.com/truecoder34/l0-wb-nats-service/service/cache"
 	"github.com/truecoder34/l0-wb-nats-service/service/models"
-	"github.com/truecoder34/l0-wb-nats-service/service/seed"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -44,7 +43,7 @@ func (server *Server) Initialize(Dbdriver, DbUser, DbPassword, DbPort, DbHost, D
 
 	server.initializeRoutes()
 
-	seed.Load(server.DB)
+	//seed.Load(server.DB)
 	//seed.CleanAndCreateEmpty(server.DB)
 
 	// init cache
@@ -93,22 +92,17 @@ func (server *Server) Run(addr string) {
 	i := 0
 	msgHandle := func(m *stan.Msg) {
 		i++
-		// 1 - Add message data to cache
-
-		// 2 - Add data to database
-		tr, err := server.CreateTransactionFromNATS(m.Data)
+		tr, err := server.ProcessTransaction(m.Data)
 		if err != nil {
-			// TODO : ADD CHECK TO PREVENT UNEXPECTED DATA PROCESSING
-			log.Print(err)
+			log.Print("[ERROR] Message was declined. Unmarshal stage problem", err)
 		}
-		log.Printf("[#%d] Received.Transaction: %s\n", i, tr)
-		// 3 - Logging or Printing Message
-		printMsg(m, i)
+		log.Printf("[#%d] Received.Transaction: ID %s\n", i, tr.ID)
+		//printMsg(m, i)
 	}
 	server.stanConn.QueueSubscribe("transactions", qgroup, msgHandle, stan.DurableName(durable))
 	log.Printf("Connected to %s clusterID: [%s] clientID: [%s]\n", URL, clusterID, clientID)
 	defer server.stanConn.Close()
 
-	fmt.Println("Listening to port 8080")
+	log.Printf("Listening to port 8080")
 	log.Fatal(http.ListenAndServe(addr, server.Router))
 }
