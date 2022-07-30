@@ -102,7 +102,7 @@ func (c *Cache) Get(key string) (interface{}, bool) {
 /*
 	Get all values from cache
 */
-func (c *Cache) GetAll() (interface{}, error) {
+func (c *Cache) GetAll() (map[string]Item, error) {
 	var err error
 	c.RLock()
 	defer c.RUnlock()
